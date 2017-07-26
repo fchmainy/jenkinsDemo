@@ -25,7 +25,7 @@ node {
    }
    stage('Testing') {
       //Run the tests
-      sh "/usr/local/bin/ansible-lint myLab.yaml"
+      //sh "/usr/local/bin/ansible-lint myLab.yaml"
       sh "/usr/local/bin/ansible-review myLab.yaml"
    }
    stage('Build') {
