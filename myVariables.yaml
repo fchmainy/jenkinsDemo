@@ -1,0 +1,12 @@
+---
+appId: "iworkflow"
+user: "admin"
+password: "Changeme123"
+tenant: "9"
+fqdn: "www33.f5demo.fch"
+bigip_username: "admin"
+bigip_password: "admin"
+validate_certs: "no"
+partition: "Common"
+member1: "10.128.50.123"
+member2: "10.128.50.124"
