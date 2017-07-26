@@ -40,7 +40,6 @@ node {
             bigip_username: 'admin',
             bigip_password: [value: 'admin', hidden: true],
             fqdn: params.fqdn,
-            vsIP: params.vsIP,
             member1: params.member1,
             member2: params.member2
          ])
