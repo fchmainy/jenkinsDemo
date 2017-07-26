@@ -1,0 +1,129 @@
+---
+- name: Deploy a new Service
+  hosts: lab
+  connection: local
+
+  vars:
+      bigip_username: "admin"
+      bigip_password: "admin"
+      validate_certs: "no"
+      partition: "Common"
+      fqdn: "my2.f5demo.com"
+      vsIP: "10.128.26.202"
+      member1: "10.128.50.193"
+      member2: "10.128.50.194"
+
+  tasks:
+      - name: create a new Transaction
+        f5_startTransaction:
+            server: "{{ inventory_hostname }}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            validate_certs: "{{ validate_certs }}"
+        register: transId
+
+      - name: Add a Pool
+        f5_pool:
+            connection: "rest"
+            server: "{{ inventory_hostname }}"
+            transactionId: "{{transId.transId}}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            validate_certs: "{{ validate_certs }}"
+            name: "{{fqdn}}_pool"
+            monitor: "http"
+        delegate_to: localhost
+        register: result
+
+      - name: Add a Member
+        f5_member:
+            connection: "rest"
+            server: "{{ inventory_hostname }}"
+            transactionId: "{{transId.transId}}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            validate_certs: "{{ validate_certs }}"
+            partition: "{{partition}}"
+            pool: "{{fqdn}}_pool"
+            name: "{{fqdn}}_member1"
+            address: "{{ member1 }}"
+            port: "80"
+        delegate_to: localhost
+        register: result
+
+      - name: Add a Member
+        f5_member:
+            connection: "rest"
+            server: "{{ inventory_hostname }}"
+            transactionId: "{{transId.transId}}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            validate_certs: "{{ validate_certs }}"
+            partition: "{{partition}}"
+            pool: "{{fqdn}}_pool"
+            name: "{{fqdn}}_member2"
+            address: "{{ member2 }}"
+            port: "80"
+        delegate_to: localhost
+        register: result
+
+      - name: Create a Virtual
+        f5_virtual:
+            connection: "rest"
+            server: "{{ inventory_hostname }}"
+            transactionId: "{{transId.transId}}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            name: "{{fqdn}}_vs"
+            description: "Ansible: {{ fqdn }}"
+            destination: "{{ vsIP }}"
+            port: "443"
+            ipProtocol: "tcp"
+            mask: "255.255.255.255"
+            source: "0.0.0.0/0"
+            snat: "automap"
+            snatpool: ""
+            pool: "{{fqdn}}_pool"
+
+      - name: Attach a Client SSL Profile with wildcard certificate
+        f5_attach_vs_profile:
+            connection: "rest"
+            server: "{{ inventory_hostname }}"
+            transactionId: "{{transId.transId}}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            virtual: "{{fqdn}}_vs"
+            name: "clientssl"
+            context: "clientside"
+
+      - name: Attach an HTTP Profile to Virtual
+        f5_attach_vs_profile:
+            connection: "rest"
+            server: "{{ inventory_hostname }}"
+            transactionId: "{{transId.transId}}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            virtual: "{{fqdn}}_vs"
+            name: "http_w_xff"
+            context: "all"
+
+      - name: commit Transaction
+        f5_commit:
+            server: "{{ inventory_hostname }}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            transactionId: "{{ transId.transId }}"
+
+      - name: Create an ASM Policy based on a Template and apply it to a VS
+        f5_asmPolicy:
+            connection: "rest"
+            server: "{{ inventory_hostname }}"
+            transactionId: "{{transId.transId}}"
+            user: "{{ bigip_username }}"
+            password: "{{ bigip_password }}"
+            partition: "{{ partition }}"
+            name: "{{fqdn}}_asm"
+            description: "This is an ASM Policy created automatically based on RDP"
+            virtual: "{{fqdn}}_vs"
+            lang: "utf-8"
+            enforcementMode: "blocking"
