@@ -25,15 +25,15 @@ node {
    }
    stage('Testing') {
       //Run the tests
-      sh "/usr/local/bin/ansible-lint myNewService.yaml"
-      sh "/usr/local/bin/ansible-review myNewService.yaml"
+      sh "/usr/local/bin/ansible-lint myLab.yaml"
+      sh "/usr/local/bin/ansible-review myLab.yaml"
    }
    stage('Build') {
        //Ansible Playbook
        ansiblePlaybook(
          colorized: true, 
          inventory: 'hosts.ini', 
-         playbook: 'myNewService.yaml', 
+         playbook: 'myLab.yaml', 
          sudoUser: null,
          extraVars: [
             username: 'admin',
