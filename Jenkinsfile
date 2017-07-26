@@ -32,8 +32,9 @@ node {
        //Ansible Playbook
        ansiblePlaybook(
          colorized: true, 
-        // inventory: 'hosts.ini', 
+         inventory: 'hosts.ini', 
          playbook: 'myLab.yaml', 
+         extras: '-vvv',
          sudoUser: null,
          extraVars: [
             username: 'admin',
